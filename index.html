@@ -33,6 +33,7 @@
 /* Hero */
 .wsf-hero { position: relative; overflow: hidden; min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 92px 24px 72px; text-align: center; background: radial-gradient(ellipse 55% 40% at 50% 4%, rgba(232,169,78,.22), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 110%, rgba(39,75,88,.6), transparent 70%), var(--ink-deep); }
 .wsf-hero > * { position: relative; z-index: 2; }
+.wsf-hero > .wsf-snow { position: absolute; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; display: block; }
 .wsf-hero-eyebrow { font-size: 13px; letter-spacing: 0.42em; text-transform: uppercase; color: var(--teal); font-weight: 400; margin-bottom: 30px; }
 .wsf-hero-h1 { font-family: var(--display); font-weight: 300; font-size: clamp(40px, 5.9vw, 76px); line-height: 1.06; letter-spacing: -0.02em; color: var(--on-dark); max-width: 19ch; text-wrap: balance; margin-bottom: 26px; }
 .wsf-hero-h1 em { font-style: italic; color: var(--brass-light); display: block; }
@@ -194,6 +195,7 @@
 
   <!-- HERO -->
   <header class="wsf-hero">
+      <canvas class="wsf-snow" aria-hidden="true"></canvas>
       <p class="wsf-hero-eyebrow">Guest Invitation</p>
       <h1 class="wsf-hero-h1">One Afternoon Inside<em>London's Most Iconic Christmas Address.</em></h1>
       <p class="wsf-hero-sub">A winter afternoon for female founders at a Piccadilly institution that has been trading since 1707.</p>
@@ -523,6 +525,48 @@
 </div>
 
 <script>
+// Snow / sparkle animation
+(function() {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.querySelector('.wsf');
+  try {
+    var canvas = root.querySelector('.wsf-snow');
+    if (!canvas || reduce || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+    var flakes = [], w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function size() {
+      var r = canvas.getBoundingClientRect();
+      var nw = Math.round(r.width), nh = Math.round(r.height);
+      if (!nw || !nh || (nw === w && nh === h)) return;
+      w = nw; h = nh;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var count = Math.round(Math.min(110, Math.max(40, w / 13)));
+      flakes = [];
+      for (var i = 0; i < count; i++) {
+        flakes.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.9 + 0.5, s: Math.random() * 0.28 + 0.10, d: Math.random() * 0.28 - 0.14, o: Math.random() * 0.45 + 0.15, g: Math.random() > 0.72 });
+      }
+    }
+    function draw() {
+      if (w && h) {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = 0; i < flakes.length; i++) {
+          var f = flakes[i];
+          ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx.fillStyle = f.g ? 'rgba(232,206,139,' + f.o + ')' : 'rgba(242,238,228,' + f.o + ')';
+          ctx.fill();
+          f.y += f.s; f.x += f.d;
+          if (f.y > h + 4) { f.y = -4; f.x = Math.random() * w; }
+          if (f.x > w + 4) f.x = -4;
+          if (f.x < -4) f.x = w + 4;
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+    size(); window.addEventListener('resize', size); requestAnimationFrame(draw);
+  } catch (err) {}
+})();
+
 // Scroll-triggered fade-in
 const rises = document.querySelectorAll('.wsf-rise');
 if ('IntersectionObserver' in window) {
